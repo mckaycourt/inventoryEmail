@@ -2,37 +2,94 @@ var express = require('express');
 var router = express.Router();
 let axios = require('axios');
 let nodemailer = require('nodemailer');
+let mysql = require('mysql');
+let config = require('./config');
+
+class Database {
+    constructor(config) {
+        this.connection = mysql.createConnection(config);
+    }
+
+    query(sql, args) {
+        return new Promise((resolve, reject) => {
+            this.connection.query(sql, args, (err, rows) => {
+                if (err)
+                    return reject(err);
+                resolve(rows);
+            });
+        });
+    }
+
+    close() {
+        return new Promise((resolve, reject) => {
+            this.connection.end(err => {
+                if (err)
+                    return reject(err);
+                resolve();
+            });
+        });
+    }
+}
+
 /* GET home page. */
 router.get('/', function (req, res, next) {
-
+    let database = new Database(config.getConfig());
     let transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: 'mckay.court@gmail.com',
-            pass: 'Mlhlt2200!!'
-        }
+        host: 'mail.byu.edu',
+        auth: config.getAuth()
     });
 
     let mailOptions = {
-        from: 'mckay.court@gmail.com', // sender address
-        to: 'reled_support@byu.edu', // list of receivers
-        subject: 'Inventory Test', // Subject line
+        from: 'reled_support@byu.edu', // sender address
+        to: 'mckay.court@gmail.com', // list of receivers
+        subject: 'Religious Education Yearly Inventory', // Subject line
     };
 
-    axios.get('http://127.0.0.1:3000/email?EmployeeID=2')
-        .then(result => {
-            mailOptions.html = result.data;
-            transporter.sendMail(mailOptions, function (err, info) {
-                if(err)
-                    console.log(err);
-                else
-                    console.log(info);
-            });
-        })
-        .catch(err => {
+    let queryDatabase = async () => {
+        try {
+            let employees = await database.query('SELECT * FROM Employee');
+            await database.close();
+            return employees;
+        }
+        catch (err) {
             console.log(err);
+        }
+    };
+
+    let sendEmail = async () => {
+
+        let employees = await queryDatabase();
+        for (let employee of employees) {
+            try {
+                const response = await axios.get(`http://127.0.0.1:3000/email?EmployeeID=${employee.EmployeeID}`);
+                const data = await response.data;
+                if(!employee.Email){
+                    console.log(employee.FirstName + ' ' + employee.LastName + ' doesn\'t have an email')
+                }
+                mailOptions.html = data;
+                if(!employee.Email) {
+                    employee.Email = 'reled_support@byu.edu';
+                }
+                // mailOptions.to = employee.Email;
+                transporter.sendMail(mailOptions, function (err, info) {
+                    if (err)
+                        console.log(err);
+                });
+
+            }
+            catch (err) {
+                if(!employee.Email) {
+                    console.log(employee.FirstName + ' ' + employee.LastName + ' NEEDS AN EMAIL')
+                }
+                console.log(employee.FirstName + ' ' + employee.LastName + ' DONT SEND');
+            }
+        }
+    };
+
+    sendEmail()
+        .then(() => {
+            res.render('index', {title: 'Express'});
         });
-    res.render('index', {title: 'Express'});
 });
 
 module.exports = router;
