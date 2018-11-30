@@ -19,20 +19,19 @@ router.get('/', function (req, res, next) {
         subject: 'Inventory Test', // Subject line
     };
 
-    axios.get('http://127.0.0.1:3000/email?EmployeeID=1')
+    axios.get('http://127.0.0.1:3000/email?EmployeeID=2')
         .then(result => {
-            console.log(result.data);
             mailOptions.html = result.data;
             transporter.sendMail(mailOptions, function (err, info) {
                 if(err)
-                    console.log(err)
+                    console.log(err);
                 else
                     console.log(info);
             });
         })
         .catch(err => {
             console.log(err);
-        })
+        });
     res.render('index', {title: 'Express'});
 });
 
