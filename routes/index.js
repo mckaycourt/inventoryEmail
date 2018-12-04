@@ -42,7 +42,7 @@ router.get('/', function (req, res, next) {
 
     let mailOptions = {
         from: 'reled_support@byu.edu', // sender address
-        to: 'mckay.court@gmail.com', // list of receivers
+        to: 'reled_support@byu.edu', // list of receivers
         subject: 'Religious Education Yearly Inventory', // Subject line
     };
 
