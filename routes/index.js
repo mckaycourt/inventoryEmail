@@ -33,6 +33,7 @@ class Database {
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
+    let employees = {};
     let database = new Database(config.getConfig());
     let transporter = nodemailer.createTransport({
         host: 'mail.byu.edu',
@@ -58,13 +59,13 @@ router.get('/', function (req, res, next) {
 
     let sendEmail = async () => {
 
-        let employees = await queryDatabase();
+        employees = await queryDatabase();
         for (let employee of employees) {
             try {
                 const response = await axios.get(`http://127.0.0.1:3000/email?EmployeeID=${employee.EmployeeID}`);
                 const data = await response.data;
                 if(!employee.Email){
-                    console.log(employee.FirstName + ' ' + employee.LastName + ' doesn\'t have an email')
+                    employee.EmailStatus = employee.FirstName + ' ' + employee.LastName + ' is missing an email.';
                 }
                 mailOptions.html = data;
                 if(!employee.Email) {
@@ -79,16 +80,16 @@ router.get('/', function (req, res, next) {
             }
             catch (err) {
                 if(!employee.Email) {
-                    console.log(employee.FirstName + ' ' + employee.LastName + ' NEEDS AN EMAIL')
+                    employee.EmailStatus = employee.FirstName + ' ' + employee.LastName + ' is missing an email.';
                 }
-                console.log(employee.FirstName + ' ' + employee.LastName + ' DONT SEND');
+                employee.EmailStatus = employee.FirstName + ' ' + employee.LastName + '\'s items have all been inventoried.';
             }
         }
     };
 
     sendEmail()
         .then(() => {
-            res.render('index', {title: 'Express'});
+            res.render('index', {title: 'Express', employees});
         });
 });
 
