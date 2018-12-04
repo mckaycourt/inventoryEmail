@@ -42,7 +42,6 @@ router.get('/', function (req, res, next) {
 
     let mailOptions = {
         from: 'reled_support@byu.edu', // sender address
-        to: 'reled_support@byu.edu', // list of receivers
         subject: 'Religious Education Yearly Inventory', // Subject line
     };
 
@@ -71,7 +70,7 @@ router.get('/', function (req, res, next) {
                 if (!employee.Email) {
                     employee.Email = 'reled_support@byu.edu';
                 }
-                // mailOptions.to = employee.Email;
+                mailOptions.to = employee.Email;
                 transporter.sendMail(mailOptions, function (err, info) {
                     if (err)
                         console.log(err);
