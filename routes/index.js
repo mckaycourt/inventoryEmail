@@ -64,25 +64,30 @@ router.get('/', function (req, res, next) {
             try {
                 const response = await axios.get(`http://127.0.0.1:3000/email?EmployeeID=${employee.EmployeeID}`);
                 const data = await response.data;
-                if(!employee.Email){
+                if (!employee.Email) {
                     employee.EmailStatus = employee.FirstName + ' ' + employee.LastName + ' is missing an email.';
                 }
                 mailOptions.html = data;
-                if(!employee.Email) {
+                if (!employee.Email) {
                     employee.Email = 'reled_support@byu.edu';
                 }
                 // mailOptions.to = employee.Email;
                 transporter.sendMail(mailOptions, function (err, info) {
                     if (err)
                         console.log(err);
+                    else
+                        employee.EmailStatus = 'Email successfully sent to ' + employee.FirstName + ' ' + employee.LastName;
                 });
 
             }
             catch (err) {
-                if(!employee.Email) {
+                if (!employee.Email) {
                     employee.EmailStatus = employee.FirstName + ' ' + employee.LastName + ' is missing an email.';
                 }
-                employee.EmailStatus = employee.FirstName + ' ' + employee.LastName + '\'s items have all been inventoried.';
+                // console.log(err.response);
+                if(!employee.EmailStatus){
+                    employee.EmailStatus = employee.FirstName + ' ' + employee.LastName + '\'s items have all been inventoried.';
+                }
             }
         }
     };
